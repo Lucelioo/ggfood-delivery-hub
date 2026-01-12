@@ -17,6 +17,9 @@ import Products from "./pages/admin/Products";
 import Categories from "./pages/admin/Categories";
 import AdminOrders from "./pages/admin/Orders";
 import Drivers from "./pages/admin/Drivers";
+import DriverDashboard from "./pages/driver/Dashboard";
+import DriverOrders from "./pages/driver/Orders";
+import DriverHistory from "./pages/driver/History";
 
 const queryClient = new QueryClient();
 
@@ -41,6 +44,10 @@ const App = () => (
               <Route path="/admin/categorias" element={<Categories />} />
               <Route path="/admin/pedidos" element={<AdminOrders />} />
               <Route path="/admin/entregadores" element={<Drivers />} />
+              {/* Driver Routes */}
+              <Route path="/entregador" element={<DriverDashboard />} />
+              <Route path="/entregador/pedidos" element={<DriverOrders />} />
+              <Route path="/entregador/historico" element={<DriverHistory />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

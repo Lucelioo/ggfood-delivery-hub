@@ -33,3 +33,8 @@ export const useIsAdmin = () => {
   const { data: role, isLoading } = useUserRole();
   return { isAdmin: role === 'admin', isLoading };
 };
+
+export const useIsDriver = () => {
+  const { data: role, isLoading } = useUserRole();
+  return { isDriver: role === 'driver', isLoading };
+};
