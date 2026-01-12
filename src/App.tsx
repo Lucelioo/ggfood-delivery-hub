@@ -12,6 +12,11 @@ import OrderConfirmed from "./pages/OrderConfirmed";
 import Login from "./pages/Login";
 import Orders from "./pages/Orders";
 import NotFound from "./pages/NotFound";
+import Dashboard from "./pages/admin/Dashboard";
+import Products from "./pages/admin/Products";
+import Categories from "./pages/admin/Categories";
+import AdminOrders from "./pages/admin/Orders";
+import Drivers from "./pages/admin/Drivers";
 
 const queryClient = new QueryClient();
 
@@ -30,6 +35,12 @@ const App = () => (
               <Route path="/pedido-confirmado" element={<OrderConfirmed />} />
               <Route path="/login" element={<Login />} />
               <Route path="/pedidos" element={<Orders />} />
+              {/* Admin Routes */}
+              <Route path="/admin" element={<Dashboard />} />
+              <Route path="/admin/produtos" element={<Products />} />
+              <Route path="/admin/categorias" element={<Categories />} />
+              <Route path="/admin/pedidos" element={<AdminOrders />} />
+              <Route path="/admin/entregadores" element={<Drivers />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
