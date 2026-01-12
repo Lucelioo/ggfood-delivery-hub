@@ -1,7 +1,7 @@
 import { Plus, Minus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Product } from '@/types';
 import { useCart } from '@/contexts/CartContext';
+import { Product } from '@/hooks/useProducts';
 
 interface ProductCardProps {
   product: Product;
@@ -13,7 +13,15 @@ const ProductCard = ({ product }: ProductCardProps) => {
   const quantity = cartItem?.quantity || 0;
 
   const handleAdd = () => {
-    addItem(product, 1);
+    addItem({
+      id: product.id,
+      name: product.name,
+      description: product.description || '',
+      price: Number(product.price),
+      image: product.image_url || '',
+      category: product.category_id || '',
+      available: product.is_available ?? true,
+    }, 1);
   };
 
   const handleRemove = () => {
@@ -25,19 +33,24 @@ const ProductCard = ({ product }: ProductCardProps) => {
   };
 
   return (
-    <div className="group bg-card rounded-2xl shadow-soft hover:shadow-card transition-all duration-300 overflow-hidden">
+    <div className="group bg-card rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden">
       {/* Image */}
       <div className="relative aspect-[4/3] overflow-hidden">
         <img
-          src={product.image}
+          src={product.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=300&fit=crop'}
           alt={product.name}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
         />
-        {!product.available && (
+        {!product.is_available && (
           <div className="absolute inset-0 bg-foreground/50 flex items-center justify-center">
             <span className="bg-card px-4 py-2 rounded-lg font-semibold">
               Indisponível
             </span>
+          </div>
+        )}
+        {product.is_featured && (
+          <div className="absolute top-3 left-3 bg-primary text-primary-foreground px-3 py-1 rounded-full text-xs font-semibold">
+            ⭐ Destaque
           </div>
         )}
       </div>
@@ -51,10 +64,10 @@ const ProductCard = ({ product }: ProductCardProps) => {
 
         <div className="flex items-center justify-between">
           <p className="text-xl font-extrabold text-primary">
-            R$ {product.price.toFixed(2).replace('.', ',')}
+            R$ {Number(product.price).toFixed(2).replace('.', ',')}
           </p>
 
-          {product.available && (
+          {product.is_available && (
             <div className="flex items-center gap-2">
               {quantity > 0 ? (
                 <div className="flex items-center gap-2 bg-primary/10 rounded-lg p-1">
