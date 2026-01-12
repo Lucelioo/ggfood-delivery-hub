@@ -1,14 +1,19 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowLeft, Mail, Lock, User, Phone } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { ArrowLeft, Mail, Lock, User, Phone, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
 const Login = () => {
+  const navigate = useNavigate();
+  const { signIn, signUp } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -21,10 +26,47 @@ const Login = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement authentication
-    console.log('Form submitted:', formData);
+    setIsLoading(true);
+
+    try {
+      if (isLogin) {
+        const { error } = await signIn(formData.email, formData.password);
+        if (error) {
+          toast.error('Erro ao entrar', {
+            description: error.message === 'Invalid login credentials' 
+              ? 'Email ou senha incorretos' 
+              : error.message,
+          });
+        } else {
+          toast.success('Bem-vindo de volta!');
+          navigate('/');
+        }
+      } else {
+        if (!formData.name.trim()) {
+          toast.error('Por favor, informe seu nome');
+          setIsLoading(false);
+          return;
+        }
+        
+        const { error } = await signUp(formData.email, formData.password, formData.name, formData.phone);
+        if (error) {
+          toast.error('Erro ao criar conta', {
+            description: error.message,
+          });
+        } else {
+          toast.success('Conta criada com sucesso!', {
+            description: 'Você já pode fazer seus pedidos.',
+          });
+          navigate('/');
+        }
+      }
+    } catch (error) {
+      toast.error('Ocorreu um erro inesperado');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -41,7 +83,7 @@ const Login = () => {
             </Link>
           </div>
 
-          <div className="bg-card rounded-2xl p-8 shadow-card animate-fade-in">
+          <div className="bg-card rounded-2xl p-8 shadow-md animate-fade-in">
             <div className="text-center mb-8">
               <h1 className="text-2xl font-bold mb-2">
                 {isLogin ? 'Bem-vindo de volta!' : 'Crie sua conta'}
@@ -67,7 +109,8 @@ const Login = () => {
                         onChange={handleInputChange}
                         placeholder="Seu nome"
                         className="pl-10"
-                        required
+                        required={!isLogin}
+                        disabled={isLoading}
                       />
                     </div>
                   </div>
@@ -82,7 +125,7 @@ const Login = () => {
                         onChange={handleInputChange}
                         placeholder="(00) 00000-0000"
                         className="pl-10"
-                        required
+                        disabled={isLoading}
                       />
                     </div>
                   </div>
@@ -102,6 +145,7 @@ const Login = () => {
                     placeholder="seu@email.com"
                     className="pl-10"
                     required
+                    disabled={isLoading}
                   />
                 </div>
               </div>
@@ -119,6 +163,8 @@ const Login = () => {
                     placeholder="••••••••"
                     className="pl-10"
                     required
+                    minLength={6}
+                    disabled={isLoading}
                   />
                 </div>
               </div>
@@ -131,8 +177,21 @@ const Login = () => {
                 </div>
               )}
 
-              <Button type="submit" variant="hero" size="lg" className="w-full">
-                {isLogin ? 'Entrar' : 'Criar Conta'}
+              <Button 
+                type="submit" 
+                variant="hero" 
+                size="lg" 
+                className="w-full"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    {isLogin ? 'Entrando...' : 'Criando conta...'}
+                  </>
+                ) : (
+                  isLogin ? 'Entrar' : 'Criar Conta'
+                )}
               </Button>
             </form>
 
@@ -143,6 +202,7 @@ const Login = () => {
                   type="button"
                   onClick={() => setIsLogin(!isLogin)}
                   className="text-primary font-semibold hover:underline"
+                  disabled={isLoading}
                 >
                   {isLogin ? 'Cadastre-se' : 'Entre aqui'}
                 </button>
