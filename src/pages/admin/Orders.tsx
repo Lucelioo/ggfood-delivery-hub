@@ -27,7 +27,7 @@ import {
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
-import { Eye, Loader2 } from 'lucide-react';
+import { Edit, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -143,8 +143,9 @@ export default function Orders() {
                     <TableCell>{paymentMethodLabels[order.payment_method] || order.payment_method}</TableCell>
                     <TableCell>{getStatusBadge(order.status || 'pending')}</TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="icon" onClick={() => handleOpenDetails(order)}>
-                        <Eye className="h-4 w-4" />
+                      <Button variant="ghost" size="sm" onClick={() => handleOpenDetails(order)} className="gap-2">
+                        <Edit className="h-4 w-4" />
+                        Alterar Status
                       </Button>
                     </TableCell>
                   </TableRow>
