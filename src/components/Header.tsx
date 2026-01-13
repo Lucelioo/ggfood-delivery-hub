@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ShoppingCart, Menu, X, MapPin, User, LogOut } from 'lucide-react';
+import { ShoppingCart, Menu, X, MapPin, User, LogOut, Truck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useIsDriver } from '@/hooks/useUserRole';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,6 +17,7 @@ const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { totalItems, totalPrice } = useCart();
   const { user, signOut } = useAuth();
+  const { isDriver } = useIsDriver();
 
   const handleSignOut = async () => {
     await signOut();
@@ -43,6 +45,16 @@ const Header = () => {
 
           {/* Actions */}
           <div className="flex items-center gap-3">
+            {/* Driver Panel Button - Only for drivers */}
+            {isDriver && (
+              <Link to="/entregador">
+                <Button variant="outline" size="sm" className="gap-2">
+                  <Truck className="w-4 h-4" />
+                  <span className="hidden sm:inline">Painel Entregador</span>
+                </Button>
+              </Link>
+            )}
+
             {/* Cart */}
             <Link to="/carrinho">
               <Button variant="outline" size="sm" className="relative gap-2">

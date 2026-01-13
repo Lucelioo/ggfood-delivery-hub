@@ -47,8 +47,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { Pencil, Trash2, Loader2, Bike, Car, UserPlus, Check, ChevronsUpDown, ExternalLink } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Pencil, Trash2, Loader2, Bike, Car, UserPlus, Check, ChevronsUpDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
@@ -93,7 +92,6 @@ const vehicleTypes = [
 ];
 
 export default function Drivers() {
-  const navigate = useNavigate();
   const { data: drivers, isLoading } = useAdminDrivers();
   const { data: availableUsers } = useUsersWithoutDriverRole();
   const updateDriver = useUpdateDriver();
@@ -265,14 +263,6 @@ export default function Drivers() {
                       <TableCell className="text-right">
                         <Button variant="ghost" size="icon" onClick={() => handleOpenEdit(driver)}>
                           <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => navigate('/entregador')}
-                          title="Acessar painel do entregador"
-                        >
-                          <ExternalLink className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="ghost"
