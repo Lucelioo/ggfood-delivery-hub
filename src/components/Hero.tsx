@@ -38,9 +38,11 @@ const Hero = () => {
                   <ArrowRight className="w-5 h-5" />
                 </Button>
               </Link>
-              <Button variant="outline" size="lg">
-                Como funciona?
-              </Button>
+              <Link to="/como-funciona">
+                <Button variant="outline" size="lg">
+                  Como funciona?
+                </Button>
+              </Link>
             </div>
 
             {/* Features */}
