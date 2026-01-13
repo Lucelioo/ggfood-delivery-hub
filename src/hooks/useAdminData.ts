@@ -313,6 +313,82 @@ export const useDeleteDriver = () => {
   });
 };
 
+// Users without driver role (for creating new drivers)
+export const useUsersWithoutDriverRole = () => {
+  return useQuery({
+    queryKey: ['users-without-driver'],
+    queryFn: async () => {
+      // Get all profiles
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('user_id, name, email, phone')
+        .order('name');
+
+      if (profilesError) throw profilesError;
+
+      // Get users who already are drivers
+      const { data: drivers, error: driversError } = await supabase
+        .from('drivers')
+        .select('user_id');
+
+      if (driversError) throw driversError;
+
+      const driverUserIds = new Set(drivers?.map(d => d.user_id) || []);
+
+      // Filter out users who are already drivers
+      return profiles?.filter(p => !driverUserIds.has(p.user_id)) || [];
+    },
+  });
+};
+
+export const useCreateDriverFromUser = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: {
+      user_id: string;
+      name: string;
+      phone: string;
+      vehicle_type?: string;
+      vehicle_plate?: string;
+    }) => {
+      // First add driver role to user_roles
+      const { error: roleError } = await supabase
+        .from('user_roles')
+        .insert({
+          user_id: data.user_id,
+          role: 'driver',
+        });
+
+      if (roleError && !roleError.message.includes('duplicate')) {
+        throw roleError;
+      }
+
+      // Then create driver record
+      const { data: driver, error: driverError } = await supabase
+        .from('drivers')
+        .insert({
+          user_id: data.user_id,
+          name: data.name,
+          phone: data.phone,
+          vehicle_type: data.vehicle_type || 'moto',
+          vehicle_plate: data.vehicle_plate || null,
+          is_active: true,
+          is_available: false,
+        })
+        .select()
+        .single();
+
+      if (driverError) throw driverError;
+      return driver;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-drivers'] });
+      queryClient.invalidateQueries({ queryKey: ['users-without-driver'] });
+    },
+  });
+};
+
 // Dashboard Stats
 export const useDashboardStats = () => {
   return useQuery({
