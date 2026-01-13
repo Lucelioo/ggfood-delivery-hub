@@ -12,6 +12,7 @@ import Checkout from "./pages/Checkout";
 import OrderConfirmed from "./pages/OrderConfirmed";
 import Login from "./pages/Login";
 import Orders from "./pages/Orders";
+import Reviews from "./pages/Reviews";
 import NotFound from "./pages/NotFound";
 import Dashboard from "./pages/admin/Dashboard";
 import Products from "./pages/admin/Products";
@@ -40,6 +41,7 @@ const App = () => (
               <Route path="/pedido-confirmado" element={<OrderConfirmed />} />
               <Route path="/login" element={<Login />} />
               <Route path="/pedidos" element={<Orders />} />
+              <Route path="/avaliacoes" element={<Reviews />} />
               {/* Admin Routes */}
               <Route path="/admin" element={<Dashboard />} />
               <Route path="/admin/produtos" element={<Products />} />
