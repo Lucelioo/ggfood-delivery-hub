@@ -225,12 +225,12 @@ export default function Orders() {
 
                 <div className="space-y-2">
                   <Label>Entregador</Label>
-                  <Select value={selectedDriver} onValueChange={setSelectedDriver}>
+                  <Select value={selectedDriver || "none"} onValueChange={(val) => setSelectedDriver(val === "none" ? "" : val)}>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione um entregador" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Nenhum</SelectItem>
+                      <SelectItem value="none">Nenhum</SelectItem>
                       {drivers?.filter(d => d.is_active && d.is_available).map((d) => (
                         <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
                       ))}
