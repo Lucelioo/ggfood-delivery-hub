@@ -9,8 +9,10 @@ import Footer from '@/components/Footer';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCreateOrder } from '@/hooks/useOrders';
+import { useCreatePayment, PixPaymentResult } from '@/hooks/usePayment';
 import { useAddresses, Address } from '@/hooks/useAddresses';
 import AddressDialog from '@/components/AddressDialog';
+import PixPaymentModal from '@/components/PixPaymentModal';
 import { toast } from 'sonner';
 
 type PaymentMethod = 'credit_card' | 'debit_card' | 'pix' | 'cash';
@@ -20,9 +22,18 @@ const Checkout = () => {
   const { items, totalPrice, clearCart } = useCart();
   const { user } = useAuth();
   const createOrder = useCreateOrder();
+  const createPayment = useCreatePayment();
   const { data: addresses = [] } = useAddresses();
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('pix');
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [pixModalOpen, setPixModalOpen] = useState(false);
+  const [pixData, setPixData] = useState<{
+    orderId: string;
+    qrCode: string;
+    qrCodeBase64: string;
+    expirationDate: string;
+  } | null>(null);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -81,8 +92,11 @@ const Checkout = () => {
       return;
     }
 
+    setIsProcessing(true);
+
     try {
-      await createOrder.mutateAsync({
+      // Create order first
+      const order = await createOrder.mutateAsync({
         items: items.map((item) => ({
           productId: item.product.id,
           productName: item.product.name,
@@ -103,18 +117,55 @@ const Checkout = () => {
         paymentMethod,
       });
 
-      toast.success('Pedido realizado com sucesso!', {
-        description: 'Você receberá atualizações sobre seu pedido.',
-      });
+      // Handle payment based on method
+      if (paymentMethod === 'pix') {
+        const paymentResult = await createPayment.mutateAsync({
+          orderId: order.id,
+          paymentMethod: 'pix',
+        });
 
-      clearCart();
-      navigate('/pedido-confirmado');
+        if (paymentResult.success && paymentResult.payment) {
+          const pixPayment = paymentResult.payment as PixPaymentResult;
+          setPixData({
+            orderId: order.id,
+            qrCode: pixPayment.qrCode,
+            qrCodeBase64: pixPayment.qrCodeBase64,
+            expirationDate: pixPayment.expirationDate,
+          });
+          setPixModalOpen(true);
+        }
+      } else if (paymentMethod === 'cash') {
+        // Cash payment - just redirect to confirmation
+        toast.success('Pedido realizado com sucesso!', {
+          description: 'Você pagará na entrega.',
+        });
+        clearCart();
+        navigate('/pedido-confirmado');
+      } else {
+        // Card payment - for now, show message about future implementation
+        toast.info('Pagamento com cartão', {
+          description: 'O pagamento será processado na entrega. Em breve teremos pagamento online.',
+        });
+        clearCart();
+        navigate('/pedido-confirmado');
+      }
     } catch (error) {
       console.error('Error creating order:', error);
       toast.error('Erro ao criar pedido', {
         description: 'Tente novamente em alguns instantes.',
       });
+    } finally {
+      setIsProcessing(false);
     }
+  };
+
+  const handlePixPaymentConfirmed = () => {
+    setPixModalOpen(false);
+    toast.success('Pagamento confirmado!', {
+      description: 'Seu pedido está sendo preparado.',
+    });
+    clearCart();
+    navigate('/pedido-confirmado');
   };
 
   if (!user) {
@@ -327,6 +378,14 @@ const Checkout = () => {
                       </button>
                     ))}
                   </div>
+
+                  {paymentMethod === 'pix' && (
+                    <div className="mt-4 p-4 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800">
+                      <p className="text-sm text-green-800 dark:text-green-200">
+                        ✓ Pagamento instantâneo via PIX. Após confirmar, você receberá o QR Code para pagamento.
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -376,9 +435,9 @@ const Checkout = () => {
                     variant="hero"
                     size="lg"
                     className="w-full"
-                    disabled={createOrder.isPending}
+                    disabled={isProcessing || createOrder.isPending || createPayment.isPending}
                   >
-                    {createOrder.isPending ? (
+                    {isProcessing || createOrder.isPending || createPayment.isPending ? (
                       <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                         Processando...
@@ -389,7 +448,7 @@ const Checkout = () => {
                   </Button>
 
                   <p className="text-xs text-center text-muted-foreground mt-4">
-                    Pagamento seguro
+                    Pagamento seguro via Mercado Pago
                   </p>
                 </div>
               </div>
@@ -398,6 +457,19 @@ const Checkout = () => {
         </div>
       </main>
       <Footer />
+
+      {/* PIX Payment Modal */}
+      {pixData && (
+        <PixPaymentModal
+          open={pixModalOpen}
+          onOpenChange={setPixModalOpen}
+          orderId={pixData.orderId}
+          qrCode={pixData.qrCode}
+          qrCodeBase64={pixData.qrCodeBase64}
+          expirationDate={pixData.expirationDate}
+          onPaymentConfirmed={handlePixPaymentConfirmed}
+        />
+      )}
     </div>
   );
 };
