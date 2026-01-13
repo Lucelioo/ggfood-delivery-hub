@@ -1,6 +1,12 @@
 import { useState } from 'react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
-import { useAdminDrivers, useUpdateDriver, useDeleteDriver } from '@/hooks/useAdminData';
+import { 
+  useAdminDrivers, 
+  useUpdateDriver, 
+  useDeleteDriver, 
+  useUsersWithoutDriverRole,
+  useCreateDriverFromUser 
+} from '@/hooks/useAdminData';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -39,7 +45,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
-import { Pencil, Trash2, Loader2, Bike, Car } from 'lucide-react';
+import { Pencil, Trash2, Loader2, Bike, Car, UserPlus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface DriverForm {
@@ -51,6 +57,14 @@ interface DriverForm {
   is_available: boolean;
 }
 
+interface NewDriverForm {
+  user_id: string;
+  name: string;
+  phone: string;
+  vehicle_type: string;
+  vehicle_plate: string;
+}
+
 const initialForm: DriverForm = {
   name: '',
   phone: '',
@@ -58,6 +72,14 @@ const initialForm: DriverForm = {
   vehicle_plate: '',
   is_active: true,
   is_available: false,
+};
+
+const initialNewDriverForm: NewDriverForm = {
+  user_id: '',
+  name: '',
+  phone: '',
+  vehicle_type: 'moto',
+  vehicle_plate: '',
 };
 
 const vehicleTypes = [
@@ -68,14 +90,18 @@ const vehicleTypes = [
 
 export default function Drivers() {
   const { data: drivers, isLoading } = useAdminDrivers();
+  const { data: availableUsers } = useUsersWithoutDriverRole();
   const updateDriver = useUpdateDriver();
   const deleteDriver = useDeleteDriver();
+  const createDriver = useCreateDriverFromUser();
   const { toast } = useToast();
 
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedDriver, setSelectedDriver] = useState<string | null>(null);
   const [form, setForm] = useState<DriverForm>(initialForm);
+  const [newDriverForm, setNewDriverForm] = useState<NewDriverForm>(initialNewDriverForm);
 
   const handleOpenEdit = (driver: NonNullable<typeof drivers>[0]) => {
     setSelectedDriver(driver.id);
@@ -141,11 +167,44 @@ export default function Drivers() {
     }
   };
 
+  const handleUserSelect = (userId: string) => {
+    const user = availableUsers?.find(u => u.user_id === userId);
+    if (user) {
+      setNewDriverForm({
+        user_id: userId,
+        name: user.name || '',
+        phone: user.phone || '',
+        vehicle_type: 'moto',
+        vehicle_plate: '',
+      });
+    }
+  };
+
+  const handleCreateDriver = async () => {
+    if (!newDriverForm.user_id || !newDriverForm.name || !newDriverForm.phone) {
+      toast({ title: 'Erro', description: 'Preencha todos os campos obrigatórios', variant: 'destructive' });
+      return;
+    }
+
+    try {
+      await createDriver.mutateAsync(newDriverForm);
+      toast({ title: 'Sucesso', description: 'Entregador criado com sucesso' });
+      setCreateDialogOpen(false);
+      setNewDriverForm(initialNewDriverForm);
+    } catch (error) {
+      toast({ title: 'Erro', description: 'Falha ao criar entregador', variant: 'destructive' });
+    }
+  };
+
   return (
     <AdminLayout title="Entregadores">
       <div className="space-y-4">
         <div className="flex justify-between items-center">
           <p className="text-muted-foreground">Gerencie a equipe de entregadores</p>
+          <Button onClick={() => setCreateDialogOpen(true)}>
+            <UserPlus className="h-4 w-4 mr-2" />
+            Novo Entregador
+          </Button>
         </div>
 
         {isLoading ? (
@@ -299,6 +358,95 @@ export default function Drivers() {
             <Button onClick={handleSubmit} disabled={updateDriver.isPending}>
               {updateDriver.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Salvar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Driver Dialog */}
+      <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Novo Entregador</DialogTitle>
+            <DialogDescription>Selecione um usuário para torná-lo entregador</DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Selecionar Usuário *</Label>
+              <Select value={newDriverForm.user_id} onValueChange={handleUserSelect}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione um usuário..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableUsers?.length === 0 ? (
+                    <div className="p-2 text-sm text-muted-foreground text-center">
+                      Nenhum usuário disponível
+                    </div>
+                  ) : (
+                    availableUsers?.map((user) => (
+                      <SelectItem key={user.user_id} value={user.user_id}>
+                        {user.name} ({user.email})
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="new-name">Nome *</Label>
+              <Input
+                id="new-name"
+                value={newDriverForm.name}
+                onChange={(e) => setNewDriverForm({ ...newDriverForm, name: e.target.value })}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="new-phone">Telefone *</Label>
+              <Input
+                id="new-phone"
+                value={newDriverForm.phone}
+                onChange={(e) => setNewDriverForm({ ...newDriverForm, phone: e.target.value })}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Veículo</Label>
+                <Select 
+                  value={newDriverForm.vehicle_type} 
+                  onValueChange={(v) => setNewDriverForm({ ...newDriverForm, vehicle_type: v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {vehicleTypes.map((v) => (
+                      <SelectItem key={v.value} value={v.value}>{v.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="new-plate">Placa</Label>
+                <Input
+                  id="new-plate"
+                  value={newDriverForm.vehicle_plate}
+                  onChange={(e) => setNewDriverForm({ ...newDriverForm, vehicle_plate: e.target.value })}
+                  placeholder="ABC-1234"
+                />
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>Cancelar</Button>
+            <Button onClick={handleCreateDriver} disabled={createDriver.isPending}>
+              {createDriver.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Criar Entregador
             </Button>
           </DialogFooter>
         </DialogContent>
