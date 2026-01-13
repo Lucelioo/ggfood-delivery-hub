@@ -64,6 +64,42 @@ export const useUpdateDriverLocation = () => {
   });
 };
 
+// Available orders (ready, no driver assigned) - for drivers to claim
+export const useAvailableOrders = () => {
+  return useQuery({
+    queryKey: ['available-orders'],
+    queryFn: async () => {
+      const { data: orders, error } = await supabase
+        .from('orders')
+        .select('*, order_items(*)')
+        .eq('status', 'ready')
+        .is('driver_id', null)
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+
+      // Fetch profiles separately
+      const userIds = [...new Set(orders?.map(o => o.user_id).filter(Boolean) as string[])];
+      
+      if (userIds.length === 0) return orders?.map(o => ({ ...o, profile: null })) || [];
+
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('user_id, name, phone')
+        .in('user_id', userIds);
+
+      const profileMap = new Map(profiles?.map(p => [p.user_id, p]));
+
+      return orders?.map(order => ({
+        ...order,
+        profile: order.user_id ? profileMap.get(order.user_id) : null,
+      })) || [];
+    },
+    refetchInterval: 10000, // Refresh every 10 seconds to see new orders quickly
+  });
+};
+
+// Orders assigned to current driver
 export const useDriverOrders = () => {
   const { user } = useAuth();
 
@@ -108,7 +144,54 @@ export const useDriverOrders = () => {
       })) || [];
     },
     enabled: !!user,
-    refetchInterval: 30000, // Refresh every 30 seconds
+    refetchInterval: 30000,
+  });
+};
+
+// Claim an order for delivery
+export const useClaimOrder = () => {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+
+  return useMutation({
+    mutationFn: async (orderId: string) => {
+      if (!user) throw new Error('User not authenticated');
+
+      // Get driver id
+      const { data: driver, error: driverError } = await supabase
+        .from('drivers')
+        .select('id, is_available')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (driverError) throw driverError;
+      if (!driver) throw new Error('Perfil de entregador não encontrado');
+      if (!driver.is_available) throw new Error('Você precisa estar online para pegar pedidos');
+
+      // Check if order is still available
+      const { data: order, error: orderError } = await supabase
+        .from('orders')
+        .select('driver_id, status')
+        .eq('id', orderId)
+        .single();
+
+      if (orderError) throw orderError;
+      if (order.driver_id) throw new Error('Este pedido já foi pego por outro entregador');
+      if (order.status !== 'ready') throw new Error('Este pedido não está mais disponível');
+
+      // Assign order to driver
+      const { error } = await supabase
+        .from('orders')
+        .update({ driver_id: driver.id })
+        .eq('id', orderId)
+        .is('driver_id', null); // Extra safety check
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['available-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['driver-orders'] });
+    },
   });
 };
 
