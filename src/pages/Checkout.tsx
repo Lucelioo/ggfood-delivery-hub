@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, CreditCard, QrCode, Banknote, MapPin, Check, Loader2 } from 'lucide-react';
+import { ArrowLeft, CreditCard, QrCode, Banknote, MapPin, Check, Loader2, Edit2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,6 +9,8 @@ import Footer from '@/components/Footer';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCreateOrder } from '@/hooks/useOrders';
+import { useAddresses, Address } from '@/hooks/useAddresses';
+import AddressDialog from '@/components/AddressDialog';
 import { toast } from 'sonner';
 
 type PaymentMethod = 'credit_card' | 'debit_card' | 'pix' | 'cash';
@@ -18,7 +20,9 @@ const Checkout = () => {
   const { items, totalPrice, clearCart } = useCart();
   const { user } = useAuth();
   const createOrder = useCreateOrder();
+  const { data: addresses = [] } = useAddresses();
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('pix');
+  const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -29,6 +33,34 @@ const Checkout = () => {
     neighborhood: '',
     city: '',
   });
+
+  // Auto-fill with default address
+  useEffect(() => {
+    const defaultAddress = addresses.find((addr) => addr.is_default);
+    if (defaultAddress && !selectedAddress) {
+      setSelectedAddress(defaultAddress);
+      setFormData((prev) => ({
+        ...prev,
+        street: defaultAddress.street,
+        number: defaultAddress.number,
+        complement: defaultAddress.complement || '',
+        neighborhood: defaultAddress.neighborhood,
+        city: defaultAddress.city,
+      }));
+    }
+  }, [addresses, selectedAddress]);
+
+  const handleAddressSelect = (address: Address) => {
+    setSelectedAddress(address);
+    setFormData((prev) => ({
+      ...prev,
+      street: address.street,
+      number: address.number,
+      complement: address.complement || '',
+      neighborhood: address.neighborhood,
+      city: address.city,
+    }));
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -142,15 +174,43 @@ const Checkout = () => {
               <div className="lg:col-span-2 space-y-6">
                 {/* Delivery Address */}
                 <div className="bg-card rounded-2xl p-6 shadow-soft">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                      <MapPin className="w-5 h-5 text-primary" />
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                        <MapPin className="w-5 h-5 text-primary" />
+                      </div>
+                      <div>
+                        <h2 className="font-bold text-lg">Endereço de Entrega</h2>
+                        <p className="text-sm text-muted-foreground">Onde devemos entregar?</p>
+                      </div>
                     </div>
-                    <div>
-                      <h2 className="font-bold text-lg">Endereço de Entrega</h2>
-                      <p className="text-sm text-muted-foreground">Onde devemos entregar?</p>
-                    </div>
+                    {addresses.length > 0 && (
+                      <AddressDialog
+                        onAddressSelect={handleAddressSelect}
+                        trigger={
+                          <Button variant="outline" size="sm" className="gap-2">
+                            <Edit2 className="w-4 h-4" />
+                            Alterar
+                          </Button>
+                        }
+                      />
+                    )}
                   </div>
+
+                  {selectedAddress && (
+                    <div className="mb-4 p-3 bg-primary/5 rounded-lg border border-primary/20">
+                      <p className="text-sm font-medium text-primary">
+                        {selectedAddress.label || 'Endereço selecionado'}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {selectedAddress.street}, {selectedAddress.number}
+                        {selectedAddress.complement && ` - ${selectedAddress.complement}`}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {selectedAddress.neighborhood}, {selectedAddress.city}
+                      </p>
+                    </div>
+                  )}
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="md:col-span-2">

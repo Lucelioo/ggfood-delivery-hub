@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useIsDriver } from '@/hooks/useUserRole';
+import { useAddresses } from '@/hooks/useAddresses';
+import AddressDialog from '@/components/AddressDialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,6 +20,9 @@ const Header = () => {
   const { totalItems, totalPrice } = useCart();
   const { user, signOut } = useAuth();
   const { isDriver } = useIsDriver();
+  const { data: addresses = [] } = useAddresses();
+  
+  const defaultAddress = addresses.find((addr) => addr.is_default);
 
   const handleSignOut = async () => {
     await signOut();
@@ -38,9 +43,16 @@ const Header = () => {
           <div className="hidden md:flex items-center gap-2 text-sm">
             <MapPin className="w-4 h-4 text-primary" />
             <span className="text-muted-foreground">Entregar em:</span>
-            <button className="font-semibold text-foreground hover:text-primary transition-colors">
-              Selecionar endereço
-            </button>
+            <AddressDialog
+              trigger={
+                <button className="font-semibold text-foreground hover:text-primary transition-colors max-w-[200px] truncate">
+                  {defaultAddress 
+                    ? `${defaultAddress.street}, ${defaultAddress.number}`
+                    : 'Selecionar endereço'
+                  }
+                </button>
+              }
+            />
           </div>
 
           {/* Actions */}
@@ -165,9 +177,16 @@ const Header = () => {
               <div className="flex items-center gap-2 px-4 py-3 text-sm">
                 <MapPin className="w-4 h-4 text-primary" />
                 <span className="text-muted-foreground">Entregar em:</span>
-                <button className="font-semibold text-foreground">
-                  Selecionar
-                </button>
+                <AddressDialog
+                  trigger={
+                    <button className="font-semibold text-foreground max-w-[150px] truncate">
+                      {defaultAddress 
+                        ? `${defaultAddress.street}, ${defaultAddress.number}`
+                        : 'Selecionar'
+                      }
+                    </button>
+                  }
+                />
               </div>
             </nav>
           </div>
