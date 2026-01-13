@@ -5,6 +5,7 @@ import CategoryNav from '@/components/CategoryNav';
 import ProductGrid from '@/components/ProductGrid';
 import CartSidebar from '@/components/CartSidebar';
 import Footer from '@/components/Footer';
+import ReviewsCarousel from '@/components/ReviewsCarousel';
 
 const Index = () => {
   const [activeCategory, setActiveCategory] = useState('all');
@@ -19,6 +20,7 @@ const Index = () => {
           onCategoryChange={setActiveCategory}
         />
         <ProductGrid activeCategory={activeCategory} />
+        <ReviewsCarousel />
       </main>
       <CartSidebar />
       <Footer />
