@@ -45,8 +45,11 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
-import { Pencil, Trash2, Loader2, Bike, Car, UserPlus } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Pencil, Trash2, Loader2, Bike, Car, UserPlus, Check, ChevronsUpDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 interface DriverForm {
   name: string;
@@ -99,6 +102,7 @@ export default function Drivers() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [userSelectOpen, setUserSelectOpen] = useState(false);
   const [selectedDriver, setSelectedDriver] = useState<string | null>(null);
   const [form, setForm] = useState<DriverForm>(initialForm);
   const [newDriverForm, setNewDriverForm] = useState<NewDriverForm>(initialNewDriverForm);
@@ -374,24 +378,52 @@ export default function Drivers() {
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>Selecionar Usuário *</Label>
-              <Select value={newDriverForm.user_id} onValueChange={handleUserSelect}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione um usuário..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableUsers?.length === 0 ? (
-                    <div className="p-2 text-sm text-muted-foreground text-center">
-                      Nenhum usuário disponível
-                    </div>
-                  ) : (
-                    availableUsers?.map((user) => (
-                      <SelectItem key={user.user_id} value={user.user_id}>
-                        {user.name} ({user.email})
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
+              <Popover open={userSelectOpen} onOpenChange={setUserSelectOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={userSelectOpen}
+                    className="w-full justify-between font-normal"
+                  >
+                    {newDriverForm.user_id
+                      ? availableUsers?.find((user) => user.user_id === newDriverForm.user_id)?.name || 'Usuário selecionado'
+                      : "Digite para buscar usuário..."}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[350px] p-0" align="start">
+                  <Command>
+                    <CommandInput placeholder="Buscar por nome ou email..." />
+                    <CommandList>
+                      <CommandEmpty>Nenhum usuário encontrado.</CommandEmpty>
+                      <CommandGroup>
+                        {availableUsers?.map((user) => (
+                          <CommandItem
+                            key={user.user_id}
+                            value={`${user.name} ${user.email}`}
+                            onSelect={() => {
+                              handleUserSelect(user.user_id);
+                              setUserSelectOpen(false);
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                newDriverForm.user_id === user.user_id ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                            <div className="flex flex-col">
+                              <span>{user.name}</span>
+                              <span className="text-xs text-muted-foreground">{user.email}</span>
+                            </div>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </div>
 
             <div className="space-y-2">
