@@ -121,7 +121,7 @@ export const useDriverOrders = () => {
         .from('orders')
         .select('*, order_items(*)')
         .eq('driver_id', driver.id)
-        .in('status', ['ready', 'delivering'])
+        .in('status', ['pending', 'confirmed', 'preparing', 'ready', 'delivering'])
         .order('created_at', { ascending: false });
 
       if (error) throw error;
