@@ -72,7 +72,7 @@ export const useAvailableOrders = () => {
       const { data: orders, error } = await supabase
         .from('orders')
         .select('*, order_items(*)')
-        .eq('status', 'ready')
+        .in('status', ['pending', 'confirmed', 'preparing', 'ready'])
         .is('driver_id', null)
         .order('created_at', { ascending: true });
 
@@ -177,7 +177,9 @@ export const useClaimOrder = () => {
 
       if (orderError) throw orderError;
       if (order.driver_id) throw new Error('Este pedido já foi pego por outro entregador');
-      if (order.status !== 'ready') throw new Error('Este pedido não está mais disponível');
+      if (!['pending', 'confirmed', 'preparing', 'ready'].includes(order.status)) {
+        throw new Error('Este pedido não está mais disponível');
+      }
 
       // Assign order to driver
       const { error } = await supabase

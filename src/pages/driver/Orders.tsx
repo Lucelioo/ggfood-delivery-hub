@@ -25,6 +25,9 @@ const formatCurrency = (value: number) => {
 
 const getStatusBadge = (status: string) => {
   const variants: Record<string, { label: string; variant: 'default' | 'secondary' | 'outline' }> = {
+    pending: { label: 'Pendente', variant: 'secondary' },
+    confirmed: { label: 'Confirmado', variant: 'secondary' },
+    preparing: { label: 'Preparando', variant: 'secondary' },
     ready: { label: 'Pronto para Retirar', variant: 'secondary' },
     delivering: { label: 'Em Entrega', variant: 'default' },
   };
@@ -243,7 +246,7 @@ export default function DriverOrders() {
           </TabsList>
 
           <TabsContent value="available" className="mt-4">
-            <p className="text-muted-foreground mb-4">Pedidos prontos aguardando um entregador</p>
+            <p className="text-muted-foreground mb-4">Pedidos aguardando entregador (ainda não atribuídos)</p>
             
             {isLoadingAvailable ? (
               <div className="space-y-4">
