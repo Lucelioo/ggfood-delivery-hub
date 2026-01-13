@@ -21,7 +21,7 @@ const Cart = () => {
             <p className="text-muted-foreground mb-6">
               Adicione alguns itens deliciosos do nosso cardápio!
             </p>
-            <Link to="/">
+            <Link to="/cardapio">
               <Button variant="hero" size="lg">
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Ver cardápio

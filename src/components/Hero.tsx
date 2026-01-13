@@ -1,5 +1,6 @@
 import { ArrowRight, Clock, Truck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
 
 const Hero = () => {
   return (
@@ -31,10 +32,12 @@ const Hero = () => {
             </p>
 
             <div className="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start animate-fade-in" style={{ animationDelay: '0.2s' }}>
-              <Button variant="hero" size="xl">
-                Ver cardápio
-                <ArrowRight className="w-5 h-5" />
-              </Button>
+              <Link to="/cardapio">
+                <Button variant="hero" size="xl">
+                  Ver cardápio
+                  <ArrowRight className="w-5 h-5" />
+                </Button>
+              </Link>
               <Button variant="outline" size="lg">
                 Como funciona?
               </Button>
