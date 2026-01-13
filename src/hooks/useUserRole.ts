@@ -4,37 +4,44 @@ import { useAuth } from '@/contexts/AuthContext';
 
 export type AppRole = 'admin' | 'customer' | 'driver';
 
-export const useUserRole = () => {
+export const useUserRoles = () => {
   const { user } = useAuth();
 
   return useQuery({
-    queryKey: ['user-role', user?.id],
-    queryFn: async (): Promise<AppRole | null> => {
-      if (!user) return null;
+    queryKey: ['user-roles', user?.id],
+    queryFn: async (): Promise<AppRole[]> => {
+      if (!user) return [];
       
       const { data, error } = await supabase
         .from('user_roles')
         .select('role')
-        .eq('user_id', user.id)
-        .maybeSingle();
+        .eq('user_id', user.id);
 
       if (error) {
-        console.error('Error fetching user role:', error);
-        return null;
+        console.error('Error fetching user roles:', error);
+        return [];
       }
 
-      return data?.role as AppRole || null;
+      return (data?.map(r => r.role as AppRole)) || [];
     },
     enabled: !!user,
   });
 };
 
+export const useUserRole = () => {
+  const { data: roles, isLoading } = useUserRoles();
+  return { 
+    data: roles?.[0] || null, 
+    isLoading 
+  };
+};
+
 export const useIsAdmin = () => {
-  const { data: role, isLoading } = useUserRole();
-  return { isAdmin: role === 'admin', isLoading };
+  const { data: roles, isLoading } = useUserRoles();
+  return { isAdmin: roles?.includes('admin') ?? false, isLoading };
 };
 
 export const useIsDriver = () => {
-  const { data: role, isLoading } = useUserRole();
-  return { isDriver: role === 'driver', isLoading };
+  const { data: roles, isLoading } = useUserRoles();
+  return { isDriver: roles?.includes('driver') ?? false, isLoading };
 };
