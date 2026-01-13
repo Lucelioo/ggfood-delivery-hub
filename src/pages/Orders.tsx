@@ -1,9 +1,10 @@
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Package, Clock, CheckCircle, Truck, MapPin, Loader2, XCircle, ThumbsUp, Ban } from 'lucide-react';
+import { ArrowLeft, Package, Clock, CheckCircle, Truck, MapPin, Loader2, XCircle, ThumbsUp, Ban, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useOrders, useConfirmOrderReceipt, useCancelOrder } from '@/hooks/useOrders';
+import { useOrdersWithReviews, useCreateReview } from '@/hooks/useReviews';
 import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -17,6 +18,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useState } from 'react';
+import StarRating from '@/components/StarRating';
+import { Textarea } from '@/components/ui/textarea';
 
 // Customer view: Aguardando Confirmação → Em Preparo → Em Rota → Pedido Entregue
 const statusConfig = {
@@ -32,12 +35,17 @@ const statusConfig = {
 const Orders = () => {
   const { user } = useAuth();
   const { data: orders, isLoading } = useOrders();
+  const { data: reviewedOrderIds = [] } = useOrdersWithReviews();
   const confirmReceipt = useConfirmOrderReceipt();
   const cancelOrder = useCancelOrder();
+  const createReview = useCreateReview();
   const { toast } = useToast();
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const [rating, setRating] = useState(0);
+  const [comment, setComment] = useState('');
 
   const handleConfirmClick = (orderId: string) => {
     setSelectedOrderId(orderId);
@@ -56,14 +64,50 @@ const Orders = () => {
       await confirmReceipt.mutateAsync(selectedOrderId);
       toast({
         title: 'Recebimento confirmado!',
-        description: 'Obrigado por confirmar o recebimento do seu pedido.',
+        description: 'Agora você pode avaliar seu pedido.',
       });
       setConfirmDialogOpen(false);
-      setSelectedOrderId(null);
+      // Open review dialog after confirmation
+      setRating(0);
+      setComment('');
+      setReviewDialogOpen(true);
     } catch (error) {
       toast({
         title: 'Erro ao confirmar',
         description: 'Não foi possível confirmar o recebimento. Tente novamente.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleOpenReview = (orderId: string) => {
+    setSelectedOrderId(orderId);
+    setRating(0);
+    setComment('');
+    setReviewDialogOpen(true);
+  };
+
+  const handleSubmitReview = async () => {
+    if (!selectedOrderId || rating === 0) return;
+
+    try {
+      await createReview.mutateAsync({
+        orderId: selectedOrderId,
+        rating,
+        comment: comment.trim() || undefined,
+      });
+      toast({
+        title: 'Avaliação enviada!',
+        description: 'Obrigado pelo seu feedback.',
+      });
+      setReviewDialogOpen(false);
+      setSelectedOrderId(null);
+      setRating(0);
+      setComment('');
+    } catch (error) {
+      toast({
+        title: 'Erro ao enviar avaliação',
+        description: 'Não foi possível enviar sua avaliação. Tente novamente.',
         variant: 'destructive',
       });
     }
@@ -155,6 +199,7 @@ const Orders = () => {
                 const orderItems = order.order_items || [];
                 const isDelivered = order.status === 'delivered';
                 const isConfirmed = !!(order as any).customer_confirmed_at;
+                const hasReview = reviewedOrderIds.includes(order.id);
 
                 return (
                   <div
@@ -219,10 +264,21 @@ const Orders = () => {
                             Confirmar Recebimento
                           </Button>
                         )}
-                        {isDelivered && isConfirmed && (
+                        {isDelivered && isConfirmed && !hasReview && (
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => handleOpenReview(order.id)}
+                            className="gap-2"
+                          >
+                            <Star className="w-4 h-4" />
+                            Avaliar
+                          </Button>
+                        )}
+                        {isDelivered && isConfirmed && hasReview && (
                           <div className="flex items-center gap-2 text-sm text-accent">
                             <CheckCircle className="w-4 h-4" />
-                            <span>Recebimento confirmado</span>
+                            <span>Avaliado</span>
                           </div>
                         )}
                       </div>
@@ -288,6 +344,47 @@ const Orders = () => {
                 <Ban className="h-4 w-4" />
               )}
               Cancelar Pedido
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={reviewDialogOpen} onOpenChange={setReviewDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Avalie seu pedido</DialogTitle>
+            <DialogDescription>
+              Como foi sua experiência? Sua avaliação nos ajuda a melhorar!
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4 space-y-4">
+            <div className="flex flex-col items-center gap-2">
+              <span className="text-sm text-muted-foreground">Toque nas estrelas para avaliar</span>
+              <StarRating rating={rating} onRatingChange={setRating} size="lg" />
+            </div>
+            <Textarea
+              placeholder="Deixe um comentário (opcional)"
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              className="resize-none"
+              rows={3}
+            />
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setReviewDialogOpen(false)}>
+              Pular
+            </Button>
+            <Button 
+              onClick={handleSubmitReview} 
+              disabled={rating === 0 || createReview.isPending}
+              className="gap-2"
+            >
+              {createReview.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Star className="h-4 w-4" />
+              )}
+              Enviar Avaliação
             </Button>
           </DialogFooter>
         </DialogContent>
