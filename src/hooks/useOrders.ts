@@ -104,3 +104,29 @@ export const useCreateOrder = () => {
     },
   });
 };
+
+export const useConfirmOrderReceipt = () => {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+
+  return useMutation({
+    mutationFn: async (orderId: string) => {
+      if (!user) throw new Error('User must be logged in');
+
+      const { data, error } = await supabase
+        .from('orders')
+        .update({ customer_confirmed_at: new Date().toISOString() })
+        .eq('id', orderId)
+        .eq('user_id', user.id)
+        .eq('status', 'delivered')
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+    },
+  });
+};
