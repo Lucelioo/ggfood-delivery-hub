@@ -121,7 +121,7 @@ const Header = () => {
           <div className="md:hidden py-4 border-t border-border animate-fade-in">
             <nav className="flex flex-col gap-2">
               <Link
-                to="/"
+                to="/cardapio"
                 className="px-4 py-3 rounded-lg hover:bg-secondary transition-colors font-medium"
                 onClick={() => setIsMenuOpen(false)}
               >
