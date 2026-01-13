@@ -8,13 +8,14 @@ import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
+// Customer view: Aguardando Confirmação → Em Preparo → Em Rota → Pedido Entregue
 const statusConfig = {
-  pending: { label: 'Pendente', icon: Clock, color: 'text-yellow-500' },
-  confirmed: { label: 'Confirmado', icon: CheckCircle, color: 'text-blue-500' },
-  preparing: { label: 'Preparando', icon: Package, color: 'text-orange-500' },
-  ready: { label: 'Pronto', icon: CheckCircle, color: 'text-green-500' },
-  delivering: { label: 'A caminho', icon: Truck, color: 'text-primary' },
-  delivered: { label: 'Entregue', icon: CheckCircle, color: 'text-accent' },
+  pending: { label: 'Aguardando Confirmação', icon: Clock, color: 'text-yellow-500' },
+  confirmed: { label: 'Pedido Confirmado', icon: CheckCircle, color: 'text-blue-500' },
+  preparing: { label: 'Em Preparo', icon: Package, color: 'text-orange-500' },
+  ready: { label: 'Pronto para Envio', icon: CheckCircle, color: 'text-green-500' },
+  delivering: { label: 'Em Rota', icon: Truck, color: 'text-primary' },
+  delivered: { label: 'Pedido Entregue', icon: CheckCircle, color: 'text-accent' },
   cancelled: { label: 'Cancelado', icon: XCircle, color: 'text-destructive' },
 };
 

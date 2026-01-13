@@ -39,12 +39,14 @@ const formatCurrency = (value: number) => {
   }).format(value);
 };
 
+// Admin view: Na Fila → Em Preparo → Pronto para Envio → Entregador na Rota → Pedido Entregue → Finalizado
 const statusOptions = [
-  { value: 'pending', label: 'Criado' },
+  { value: 'pending', label: 'Na Fila' },
   { value: 'confirmed', label: 'Confirmado' },
   { value: 'preparing', label: 'Em Preparo' },
-  { value: 'delivering', label: 'Saiu para Entrega' },
-  { value: 'delivered', label: 'Entregue' },
+  { value: 'ready', label: 'Pronto para Envio' },
+  { value: 'delivering', label: 'Entregador na Rota' },
+  { value: 'delivered', label: 'Pedido Entregue' },
   { value: 'cancelled', label: 'Cancelado' },
 ];
 
@@ -60,6 +62,7 @@ const getStatusBadge = (status: string) => {
     pending: 'secondary',
     confirmed: 'default',
     preparing: 'default',
+    ready: 'default',
     delivering: 'default',
     delivered: 'outline',
     cancelled: 'destructive',

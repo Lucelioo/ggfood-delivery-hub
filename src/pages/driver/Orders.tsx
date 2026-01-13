@@ -23,13 +23,15 @@ const formatCurrency = (value: number) => {
   }).format(value);
 };
 
+// Driver view: Pronto para Entrega → Em Rota → Pedido Entregue
 const getStatusBadge = (status: string) => {
   const variants: Record<string, { label: string; variant: 'default' | 'secondary' | 'outline' }> = {
-    pending: { label: 'Pendente', variant: 'secondary' },
-    confirmed: { label: 'Confirmado', variant: 'secondary' },
-    preparing: { label: 'Preparando', variant: 'secondary' },
-    ready: { label: 'Pronto para Retirar', variant: 'secondary' },
-    delivering: { label: 'Em Entrega', variant: 'default' },
+    pending: { label: 'Aguardando Preparo', variant: 'secondary' },
+    confirmed: { label: 'Aguardando Preparo', variant: 'secondary' },
+    preparing: { label: 'Em Preparo', variant: 'secondary' },
+    ready: { label: 'Pronto para Entrega', variant: 'default' },
+    delivering: { label: 'Em Rota', variant: 'default' },
+    delivered: { label: 'Pedido Entregue', variant: 'outline' },
   };
   const { label, variant } = variants[status] || { label: status, variant: 'secondary' };
   return <Badge variant={variant}>{label}</Badge>;
