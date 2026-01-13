@@ -1,21 +1,24 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, CreditCard, QrCode, Banknote, MapPin, Check } from 'lucide-react';
+import { ArrowLeft, CreditCard, QrCode, Banknote, MapPin, Check, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useCart } from '@/contexts/CartContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { useCreateOrder } from '@/hooks/useOrders';
 import { toast } from 'sonner';
 
-type PaymentMethod = 'credit_card' | 'pix' | 'cash';
+type PaymentMethod = 'credit_card' | 'debit_card' | 'pix' | 'cash';
 
 const Checkout = () => {
   const navigate = useNavigate();
   const { items, totalPrice, clearCart } = useCart();
+  const { user } = useAuth();
+  const createOrder = useCreateOrder();
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('pix');
-  const [isLoading, setIsLoading] = useState(false);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -34,36 +37,96 @@ const Checkout = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
 
-    // Simulate order processing
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    if (!user) {
+      toast.error('Você precisa estar logado para fazer um pedido');
+      navigate('/login');
+      return;
+    }
 
-    toast.success('Pedido realizado com sucesso!', {
-      description: 'Você receberá atualizações sobre seu pedido.',
-    });
+    if (!formData.name || !formData.phone || !formData.street || !formData.number || !formData.neighborhood || !formData.city) {
+      toast.error('Preencha todos os campos obrigatórios');
+      return;
+    }
 
-    clearCart();
-    navigate('/pedido-confirmado');
-    setIsLoading(false);
+    try {
+      await createOrder.mutateAsync({
+        items: items.map((item) => ({
+          productId: item.product.id,
+          productName: item.product.name,
+          productPrice: item.product.price,
+          quantity: item.quantity,
+          notes: item.notes,
+        })),
+        deliveryAddress: {
+          name: formData.name,
+          phone: formData.phone,
+          street: formData.street,
+          number: formData.number,
+          complement: formData.complement || undefined,
+          neighborhood: formData.neighborhood,
+          city: formData.city,
+          state: 'SP',
+        },
+        paymentMethod,
+      });
+
+      toast.success('Pedido realizado com sucesso!', {
+        description: 'Você receberá atualizações sobre seu pedido.',
+      });
+
+      clearCart();
+      navigate('/pedido-confirmado');
+    } catch (error) {
+      console.error('Error creating order:', error);
+      toast.error('Erro ao criar pedido', {
+        description: 'Tente novamente em alguns instantes.',
+      });
+    }
   };
 
+  if (!user) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <main className="flex-1 flex items-center justify-center">
+          <div className="text-center py-16 animate-fade-in">
+            <h2 className="text-2xl font-bold mb-2">Faça login para continuar</h2>
+            <p className="text-muted-foreground mb-6">
+              Você precisa estar logado para finalizar seu pedido
+            </p>
+            <Link to="/login">
+              <Button variant="hero" size="lg">
+                Entrar
+              </Button>
+            </Link>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
   if (items.length === 0) {
-    navigate('/');
+    navigate('/cardapio');
     return null;
   }
 
   const paymentMethods = [
     { id: 'pix' as PaymentMethod, name: 'PIX', icon: QrCode, description: 'Pagamento instantâneo' },
-    { id: 'credit_card' as PaymentMethod, name: 'Cartão', icon: CreditCard, description: 'Crédito ou débito' },
+    { id: 'credit_card' as PaymentMethod, name: 'Cartão de Crédito', icon: CreditCard, description: 'Crédito' },
+    { id: 'debit_card' as PaymentMethod, name: 'Cartão de Débito', icon: CreditCard, description: 'Débito' },
     { id: 'cash' as PaymentMethod, name: 'Dinheiro', icon: Banknote, description: 'Pague na entrega' },
   ];
+
+  const deliveryFee = totalPrice >= 50 ? 0 : 5.99;
+  const finalTotal = totalPrice + deliveryFee;
 
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
       <main className="flex-1 py-8">
-        <div className="container mx-auto">
+        <div className="container mx-auto px-4">
           <div className="flex items-center gap-4 mb-8">
             <Link to="/carrinho">
               <Button variant="ghost" size="icon">
@@ -91,7 +154,7 @@ const Checkout = () => {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="md:col-span-2">
-                      <Label htmlFor="name">Nome completo</Label>
+                      <Label htmlFor="name">Nome completo *</Label>
                       <Input
                         id="name"
                         name="name"
@@ -102,7 +165,7 @@ const Checkout = () => {
                       />
                     </div>
                     <div className="md:col-span-2">
-                      <Label htmlFor="phone">Telefone</Label>
+                      <Label htmlFor="phone">Telefone *</Label>
                       <Input
                         id="phone"
                         name="phone"
@@ -113,7 +176,7 @@ const Checkout = () => {
                       />
                     </div>
                     <div className="md:col-span-2">
-                      <Label htmlFor="street">Rua</Label>
+                      <Label htmlFor="street">Rua *</Label>
                       <Input
                         id="street"
                         name="street"
@@ -124,7 +187,7 @@ const Checkout = () => {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="number">Número</Label>
+                      <Label htmlFor="number">Número *</Label>
                       <Input
                         id="number"
                         name="number"
@@ -145,7 +208,7 @@ const Checkout = () => {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="neighborhood">Bairro</Label>
+                      <Label htmlFor="neighborhood">Bairro *</Label>
                       <Input
                         id="neighborhood"
                         name="neighborhood"
@@ -156,7 +219,7 @@ const Checkout = () => {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="city">Cidade</Label>
+                      <Label htmlFor="city">Cidade *</Label>
                       <Input
                         id="city"
                         name="city"
@@ -181,7 +244,7 @@ const Checkout = () => {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     {paymentMethods.map((method) => (
                       <button
                         key={method.id}
@@ -199,7 +262,7 @@ const Checkout = () => {
                           </div>
                         )}
                         <method.icon className="w-6 h-6 mb-2 text-primary" />
-                        <p className="font-semibold">{method.name}</p>
+                        <p className="font-semibold text-sm">{method.name}</p>
                         <p className="text-xs text-muted-foreground">{method.description}</p>
                       </button>
                     ))}
@@ -232,13 +295,17 @@ const Checkout = () => {
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Taxa de entrega</span>
-                      <span className="text-accent font-medium">Grátis</span>
+                      {deliveryFee === 0 ? (
+                        <span className="text-accent font-medium">Grátis</span>
+                      ) : (
+                        <span>R$ {deliveryFee.toFixed(2).replace('.', ',')}</span>
+                      )}
                     </div>
                     <div className="border-t border-border pt-3">
                       <div className="flex justify-between">
                         <span className="font-bold">Total</span>
                         <span className="text-xl font-bold text-primary">
-                          R$ {totalPrice.toFixed(2).replace('.', ',')}
+                          R$ {finalTotal.toFixed(2).replace('.', ',')}
                         </span>
                       </div>
                     </div>
@@ -249,13 +316,20 @@ const Checkout = () => {
                     variant="hero"
                     size="lg"
                     className="w-full"
-                    disabled={isLoading}
+                    disabled={createOrder.isPending}
                   >
-                    {isLoading ? 'Processando...' : 'Confirmar Pedido'}
+                    {createOrder.isPending ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Processando...
+                      </>
+                    ) : (
+                      'Confirmar Pedido'
+                    )}
                   </Button>
 
                   <p className="text-xs text-center text-muted-foreground mt-4">
-                    Pagamento seguro via Mercado Pago
+                    Pagamento seguro
                   </p>
                 </div>
               </div>
