@@ -1,9 +1,9 @@
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Package, Clock, CheckCircle, Truck, MapPin, Loader2, XCircle, ThumbsUp } from 'lucide-react';
+import { ArrowLeft, Package, Clock, CheckCircle, Truck, MapPin, Loader2, XCircle, ThumbsUp, Ban } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { useOrders, useConfirmOrderReceipt } from '@/hooks/useOrders';
+import { useOrders, useConfirmOrderReceipt, useCancelOrder } from '@/hooks/useOrders';
 import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -33,13 +33,20 @@ const Orders = () => {
   const { user } = useAuth();
   const { data: orders, isLoading } = useOrders();
   const confirmReceipt = useConfirmOrderReceipt();
+  const cancelOrder = useCancelOrder();
   const { toast } = useToast();
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
 
   const handleConfirmClick = (orderId: string) => {
     setSelectedOrderId(orderId);
     setConfirmDialogOpen(true);
+  };
+
+  const handleCancelClick = (orderId: string) => {
+    setSelectedOrderId(orderId);
+    setCancelDialogOpen(true);
   };
 
   const handleConfirmReceipt = async () => {
@@ -57,6 +64,26 @@ const Orders = () => {
       toast({
         title: 'Erro ao confirmar',
         description: 'Não foi possível confirmar o recebimento. Tente novamente.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleCancelOrder = async () => {
+    if (!selectedOrderId) return;
+
+    try {
+      await cancelOrder.mutateAsync(selectedOrderId);
+      toast({
+        title: 'Pedido cancelado',
+        description: 'Seu pedido foi cancelado com sucesso.',
+      });
+      setCancelDialogOpen(false);
+      setSelectedOrderId(null);
+    } catch (error) {
+      toast({
+        title: 'Erro ao cancelar',
+        description: 'Não foi possível cancelar o pedido. Tente novamente.',
         variant: 'destructive',
       });
     }
@@ -162,6 +189,17 @@ const Orders = () => {
                         R$ {Number(order.total).toFixed(2).replace('.', ',')}
                       </p>
                       <div className="flex items-center gap-3">
+                        {(order.status === 'pending' || order.status === 'confirmed') && (
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => handleCancelClick(order.id)}
+                            className="gap-2 text-destructive hover:text-destructive"
+                          >
+                            <Ban className="w-4 h-4" />
+                            Cancelar
+                          </Button>
+                        )}
                         {order.status === 'delivering' && order.estimated_delivery && (
                           <div className="flex items-center gap-2 text-sm text-primary">
                             <MapPin className="w-4 h-4" />
@@ -221,6 +259,35 @@ const Orders = () => {
                 <ThumbsUp className="h-4 w-4" />
               )}
               Confirmar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Cancelar Pedido</DialogTitle>
+            <DialogDescription>
+              Tem certeza que deseja cancelar este pedido? Esta ação não pode ser desfeita.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setCancelDialogOpen(false)}>
+              Voltar
+            </Button>
+            <Button 
+              variant="destructive"
+              onClick={handleCancelOrder} 
+              disabled={cancelOrder.isPending}
+              className="gap-2"
+            >
+              {cancelOrder.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Ban className="h-4 w-4" />
+              )}
+              Cancelar Pedido
             </Button>
           </DialogFooter>
         </DialogContent>
