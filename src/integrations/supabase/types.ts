@@ -183,6 +183,7 @@ export type Database = {
         Row: {
           address_id: string | null
           created_at: string
+          customer_confirmed_at: string | null
           delivered_at: string | null
           delivery_address: Json | null
           delivery_fee: number | null
@@ -203,6 +204,7 @@ export type Database = {
         Insert: {
           address_id?: string | null
           created_at?: string
+          customer_confirmed_at?: string | null
           delivered_at?: string | null
           delivery_address?: Json | null
           delivery_fee?: number | null
@@ -223,6 +225,7 @@ export type Database = {
         Update: {
           address_id?: string | null
           created_at?: string
+          customer_confirmed_at?: string | null
           delivered_at?: string | null
           delivery_address?: Json | null
           delivery_fee?: number | null
