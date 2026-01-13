@@ -40,11 +40,10 @@ const formatCurrency = (value: number) => {
 };
 
 const statusOptions = [
-  { value: 'pending', label: 'Pendente' },
+  { value: 'pending', label: 'Criado' },
   { value: 'confirmed', label: 'Confirmado' },
-  { value: 'preparing', label: 'Preparando' },
-  { value: 'ready', label: 'Pronto para Entrega' },
-  { value: 'delivering', label: 'Em Entrega' },
+  { value: 'preparing', label: 'Em Preparo' },
+  { value: 'delivering', label: 'Saiu para Entrega' },
   { value: 'delivered', label: 'Entregue' },
   { value: 'cancelled', label: 'Cancelado' },
 ];
@@ -61,7 +60,6 @@ const getStatusBadge = (status: string) => {
     pending: 'secondary',
     confirmed: 'default',
     preparing: 'default',
-    ready: 'default',
     delivering: 'default',
     delivered: 'outline',
     cancelled: 'destructive',
