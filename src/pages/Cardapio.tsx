@@ -19,7 +19,6 @@ export default function Cardapio() {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const categoryRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
-  // Group products by category
   const productsByCategory = products?.reduce((acc, product) => {
     const catId = product.category_id || 'sem-categoria';
     if (!acc[catId]) acc[catId] = [];
@@ -37,7 +36,6 @@ export default function Cardapio() {
     categoryRefs.current[categoryId]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
-  // Intersection observer to highlight active category
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {

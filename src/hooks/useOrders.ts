@@ -63,7 +63,6 @@ export const useCreateOrder = () => {
       const deliveryFee = subtotal >= 50 ? 0 : 5.99;
       const total = subtotal + deliveryFee;
 
-      // Create order
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert([{
@@ -81,7 +80,6 @@ export const useCreateOrder = () => {
 
       if (orderError) throw orderError;
 
-      // Create order items
       const orderItems = items.map((item) => ({
         order_id: order.id,
         product_id: item.productId,

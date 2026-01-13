@@ -23,7 +23,6 @@ const formatCurrency = (value: number) => {
   }).format(value);
 };
 
-// Driver view: Pronto para Entrega → Em Rota → Pedido Entregue
 const getStatusBadge = (status: string) => {
   const variants: Record<string, { label: string; variant: 'default' | 'secondary' | 'outline' }> = {
     pending: { label: 'Aguardando Preparo', variant: 'secondary' },

@@ -60,13 +60,11 @@ export const useSetDefaultAddress = () => {
     mutationFn: async (addressId: string) => {
       if (!user) throw new Error('User must be logged in');
 
-      // First, set all addresses to non-default
       await supabase
         .from('addresses')
         .update({ is_default: false })
         .eq('user_id', user.id);
 
-      // Then set the selected one as default
       const { error } = await supabase
         .from('addresses')
         .update({ is_default: true })

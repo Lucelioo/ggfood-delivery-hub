@@ -33,7 +33,6 @@ export const usePublicReviews = (limit?: number) => {
       if (error) throw error;
       if (!reviews || reviews.length === 0) return [];
 
-      // Fetch profiles for the reviews
       const userIds = [...new Set(reviews.map(r => r.user_id))];
       const { data: profiles } = await supabase
         .from('profiles')
@@ -62,7 +61,6 @@ export const useAllPublicReviews = () => {
       if (error) throw error;
       if (!reviews || reviews.length === 0) return [];
 
-      // Fetch profiles for the reviews
       const userIds = [...new Set(reviews.map(r => r.user_id))];
       const { data: profiles } = await supabase
         .from('profiles')

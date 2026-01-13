@@ -5,7 +5,6 @@ export class StatsService {
   private statsRepository = new StatsRepository()
 
   async getDashboardStats(): Promise<DashboardStats> {
-    // Fetch all stats in parallel for better performance
     const [
       totalOrders,
       totalRevenue,

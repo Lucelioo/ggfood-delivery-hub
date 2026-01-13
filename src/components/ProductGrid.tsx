@@ -20,7 +20,6 @@ const ProductGrid = ({ activeCategory }: ProductGridProps) => {
     return category?.icon || '🍽️';
   };
 
-  // Group products by category when showing all
   const groupedProducts = activeCategory === 'all' && categories
     ? categories.reduce((acc, category) => {
         const categoryProducts = products?.filter((p) => p.category_id === category.id) || [];

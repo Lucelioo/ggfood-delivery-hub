@@ -21,7 +21,6 @@ import { useState } from 'react';
 import StarRating from '@/components/StarRating';
 import { Textarea } from '@/components/ui/textarea';
 
-// Customer view: Aguardando Confirmação → Em Preparo → Em Rota → Pedido Entregue
 const statusConfig = {
   pending: { label: 'Aguardando Confirmação', icon: Clock, color: 'text-yellow-500' },
   confirmed: { label: 'Pedido Confirmado', icon: CheckCircle, color: 'text-blue-500' },
@@ -67,7 +66,6 @@ const Orders = () => {
         description: 'Agora você pode avaliar seu pedido.',
       });
       setConfirmDialogOpen(false);
-      // Open review dialog after confirmation
       setRating(0);
       setComment('');
       setReviewDialogOpen(true);

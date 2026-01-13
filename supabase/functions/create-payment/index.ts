@@ -89,7 +89,6 @@ serve(async (req) => {
       )
     }
 
-    // Verify order belongs to user
     const adminClient = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -131,7 +130,6 @@ serve(async (req) => {
 
       const paymentStatus = mapStatus(payment.status)
 
-      // Update order with payment info
       await adminClient
         .from('orders')
         .update({
@@ -180,7 +178,6 @@ serve(async (req) => {
 
       const paymentStatus = mapStatus(payment.status)
 
-      // Update order with payment info
       const newStatus = paymentStatus === 'paid' ? 'confirmed' : order.status
       await adminClient
         .from('orders')

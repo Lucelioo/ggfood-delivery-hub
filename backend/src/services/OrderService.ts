@@ -16,7 +16,7 @@ export class OrderService {
       (sum, item) => sum + item.productPrice * item.quantity,
       0
     )
-    const deliveryFee = 5.00 // Taxa fixa de entrega
+    const deliveryFee = 5.00 
     const total = subtotal + deliveryFee
 
     return { subtotal, deliveryFee, total }
@@ -40,16 +40,13 @@ export class OrderService {
   }
 
   async createOrder(userId: string, orderData: CreateOrderRequest) {
-    // Validate items
     const validation = this.validateOrderItems(orderData.items)
     if (!validation.valid) {
       throw new Error(validation.error)
     }
 
-    // Calculate totals
     const { subtotal, deliveryFee, total } = this.calculateTotals(orderData.items)
 
-    // Create order
     const order = await this.orderRepository.create(
       userId,
       subtotal,
@@ -60,7 +57,6 @@ export class OrderService {
       orderData.notes
     )
 
-    // Create order items
     await this.orderRepository.createOrderItems(order.id, orderData.items)
 
     return {
@@ -100,15 +96,12 @@ export class OrderService {
     status: OrderStatus,
     driverId?: string
   ) {
-    // If status is delivered, set delivered_at
     const deliveredAt = status === 'delivered' 
       ? new Date().toISOString() 
       : undefined
 
-    // Update status
     const order = await this.orderRepository.updateStatus(orderId, status, deliveredAt)
 
-    // If driverId provided, assign driver
     if (driverId) {
       await this.orderRepository.assignDriver(orderId, driverId)
     }
@@ -117,7 +110,6 @@ export class OrderService {
   }
 
   async claimOrder(orderId: string, userId: string) {
-    // Get driver info
     const driver = await this.driverRepository.findByUserId(userId)
     
     if (!driver) {
@@ -128,7 +120,6 @@ export class OrderService {
       throw new Error('Você precisa estar online para aceitar pedidos')
     }
 
-    // Check if order is available
     const order = await this.orderRepository.findById(orderId)
     
     if (!order) {
@@ -144,7 +135,6 @@ export class OrderService {
       throw new Error('Este pedido não está disponível para entrega')
     }
 
-    // Assign driver to order
     const newStatus = order.status === 'ready' ? 'out_for_delivery' : order.status
     const updatedOrder = await this.orderRepository.assignDriver(
       orderId,

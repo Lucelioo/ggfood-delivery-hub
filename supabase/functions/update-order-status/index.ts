@@ -5,41 +5,26 @@ import { requireAdminOrDriver, checkUserRole } from '../../../backend/src/middle
 import { corsHeaders, successResponse, errorResponse } from '../../../backend/src/types/api.types.ts'
 import { OrderStatus, UpdateOrderStatusRequest } from '../../../backend/src/types/order.types.ts'
 
-/**
- * Edge Function: update-order-status
- * 
- * Endpoint para atualização de status de pedidos.
- * Apenas admins e entregadores podem atualizar status.
- * 
- * POST /update-order-status
- * Body: { orderId, status, driverId? }
- */
-
 const orderService = new OrderService()
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
 
   try {
-    // Authenticate user
     const authResult = await authenticateRequest(req)
     if (!authResult.success || !authResult.user) {
       return authResult.error!
     }
 
-    // Check admin or driver role
     const roleResult = await requireAdminOrDriver(authResult.user.id)
     if (!roleResult.success) {
       return roleResult.error!
     }
 
-    // Parse request body
     const { orderId, status, driverId }: UpdateOrderStatusRequest = await req.json()
 
-    // Validate required fields
     if (!orderId) {
       return errorResponse('ID do pedido não fornecido')
     }
@@ -48,7 +33,6 @@ serve(async (req) => {
       return errorResponse('Status não fornecido')
     }
 
-    // Validate status value
     const validStatuses: OrderStatus[] = [
       'pending', 'confirmed', 'preparing', 'ready', 
       'out_for_delivery', 'delivered', 'cancelled'
@@ -58,7 +42,7 @@ serve(async (req) => {
       return errorResponse('Status inválido')
     }
 
-    // Update order status using service
+     Update order status using service
     const order = await orderService.updateOrderStatus(orderId, status, driverId)
 
     return successResponse(order, `Status atualizado para: ${status}`)

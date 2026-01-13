@@ -23,7 +23,7 @@ export async function checkUserRole(userId: string): Promise<RoleCheckResult> {
       console.error('Error fetching user role:', error)
       return {
         success: true,
-        role: 'customer', // Default role if not found
+        role: 'customer',
       }
     }
 

@@ -37,7 +37,6 @@ serve(async (req) => {
     const body = await req.json()
     console.log('Webhook received:', JSON.stringify(body))
 
-    // Mercado Pago sends different notification types
     if (body.type !== 'payment' && body.action !== 'payment.updated' && body.action !== 'payment.created') {
       return new Response(
         JSON.stringify({ message: 'Notification type ignored' }),
@@ -53,7 +52,6 @@ serve(async (req) => {
       )
     }
 
-    // Get payment details from Mercado Pago
     const paymentResponse = await fetch(`${MERCADOPAGO_API_URL}/payments/${paymentId}`, {
       headers: {
         'Authorization': `Bearer ${accessToken}`,
@@ -82,13 +80,11 @@ serve(async (req) => {
 
     const paymentStatus = mapStatus(payment.status)
     
-    // Update order payment status
     const updateData: Record<string, string> = {
       payment_status: paymentStatus,
       payment_id: String(payment.id),
     }
 
-    // If payment is approved, confirm the order
     if (paymentStatus === 'paid') {
       const { data: order } = await supabase
         .from('orders')
