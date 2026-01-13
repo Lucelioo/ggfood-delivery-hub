@@ -14,6 +14,7 @@ import Login from "./pages/Login";
 import Orders from "./pages/Orders";
 import Profile from "./pages/Profile";
 import Reviews from "./pages/Reviews";
+import HowItWorks from "./pages/HowItWorks";
 import NotFound from "./pages/NotFound";
 import Dashboard from "./pages/admin/Dashboard";
 import Products from "./pages/admin/Products";
@@ -44,6 +45,7 @@ const App = () => (
               <Route path="/pedidos" element={<Orders />} />
               <Route path="/perfil" element={<Profile />} />
               <Route path="/avaliacoes" element={<Reviews />} />
+              <Route path="/como-funciona" element={<HowItWorks />} />
               {/* Admin Routes */}
               <Route path="/admin" element={<Dashboard />} />
               <Route path="/admin/produtos" element={<Products />} />
