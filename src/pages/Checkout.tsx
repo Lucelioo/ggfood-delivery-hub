@@ -45,7 +45,6 @@ const Checkout = () => {
     city: '',
   });
 
-  // Auto-fill with default address
   useEffect(() => {
     const defaultAddress = addresses.find((addr) => addr.is_default);
     if (defaultAddress && !selectedAddress) {
@@ -95,7 +94,6 @@ const Checkout = () => {
     setIsProcessing(true);
 
     try {
-      // Create order first
       const order = await createOrder.mutateAsync({
         items: items.map((item) => ({
           productId: item.product.id,
@@ -117,7 +115,6 @@ const Checkout = () => {
         paymentMethod,
       });
 
-      // Handle payment based on method
       if (paymentMethod === 'pix') {
         const paymentResult = await createPayment.mutateAsync({
           orderId: order.id,
@@ -135,14 +132,12 @@ const Checkout = () => {
           setPixModalOpen(true);
         }
       } else if (paymentMethod === 'cash') {
-        // Cash payment - just redirect to confirmation
         toast.success('Pedido realizado com sucesso!', {
           description: 'Você pagará na entrega.',
         });
         clearCart();
         navigate('/pedido-confirmado');
       } else {
-        // Card payment - for now, show message about future implementation
         toast.info('Pagamento com cartão', {
           description: 'O pagamento será processado na entrega. Em breve teremos pagamento online.',
         });

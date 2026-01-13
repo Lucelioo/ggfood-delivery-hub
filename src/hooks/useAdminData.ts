@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
-// Categories
 export const useAdminCategories = () => {
   return useQuery({
     queryKey: ['admin-categories'],
@@ -76,7 +75,6 @@ export const useDeleteCategory = () => {
   });
 };
 
-// Products
 export const useAdminProducts = () => {
   return useQuery({
     queryKey: ['admin-products'],
@@ -168,7 +166,6 @@ export const useDeleteProduct = () => {
   });
 };
 
-// Orders
 export const useAdminOrders = () => {
   return useQuery({
     queryKey: ['admin-orders'],
@@ -184,7 +181,6 @@ export const useAdminOrders = () => {
 
       if (error) throw error;
 
-      // Fetch profiles separately
       const userIds = [...new Set(orders?.map(o => o.user_id).filter(Boolean) as string[])];
       const { data: profiles } = await supabase
         .from('profiles')
@@ -227,7 +223,6 @@ export const useUpdateOrderStatus = () => {
   });
 };
 
-// Drivers
 export const useAdminDrivers = () => {
   return useQuery({
     queryKey: ['admin-drivers'],
@@ -313,12 +308,10 @@ export const useDeleteDriver = () => {
   });
 };
 
-// Users without driver role (for creating new drivers)
 export const useUsersWithoutDriverRole = () => {
   return useQuery({
     queryKey: ['users-without-driver'],
     queryFn: async () => {
-      // Get all profiles
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('user_id, name, email, phone')
@@ -326,7 +319,6 @@ export const useUsersWithoutDriverRole = () => {
 
       if (profilesError) throw profilesError;
 
-      // Get users who already are drivers
       const { data: drivers, error: driversError } = await supabase
         .from('drivers')
         .select('user_id');
@@ -335,7 +327,6 @@ export const useUsersWithoutDriverRole = () => {
 
       const driverUserIds = new Set(drivers?.map(d => d.user_id) || []);
 
-      // Filter out users who are already drivers
       return profiles?.filter(p => !driverUserIds.has(p.user_id)) || [];
     },
   });
@@ -352,7 +343,6 @@ export const useCreateDriverFromUser = () => {
       vehicle_type?: string;
       vehicle_plate?: string;
     }) => {
-      // First add driver role to user_roles
       const { error: roleError } = await supabase
         .from('user_roles')
         .insert({
@@ -364,7 +354,6 @@ export const useCreateDriverFromUser = () => {
         throw roleError;
       }
 
-      // Then create driver record
       const { data: driver, error: driverError } = await supabase
         .from('drivers')
         .insert({
@@ -389,7 +378,6 @@ export const useCreateDriverFromUser = () => {
   });
 };
 
-// Dashboard Stats
 export const useDashboardStats = () => {
   return useQuery({
     queryKey: ['dashboard-stats'],

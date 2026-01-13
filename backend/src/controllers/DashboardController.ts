@@ -7,7 +7,6 @@ export class DashboardController {
   private statsService = new StatsService()
 
   async handleRequest(req: Request): Promise<Response> {
-    // Handle CORS preflight
     if (req.method === 'OPTIONS') {
       return new Response(null, { headers: corsHeaders })
     }
@@ -16,7 +15,6 @@ export class DashboardController {
     const path = url.pathname.split('/').filter(Boolean)
 
     try {
-      // GET /dashboard/stats - Get dashboard statistics
       if (req.method === 'GET' && path[1] === 'stats') {
         return this.getStats(req)
       }
@@ -29,13 +27,11 @@ export class DashboardController {
   }
 
   async getStats(req: Request): Promise<Response> {
-    // Authenticate
     const authResult = await authenticateRequest(req)
     if (!authResult.success || !authResult.user) {
       return authResult.error!
     }
 
-    // Check admin role
     const roleResult = await requireAdmin(authResult.user.id)
     if (!roleResult.success) {
       return roleResult.error!

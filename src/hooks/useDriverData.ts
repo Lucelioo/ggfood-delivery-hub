@@ -64,7 +64,6 @@ export const useUpdateDriverLocation = () => {
   });
 };
 
-// Available orders (ready, no driver assigned) - for drivers to claim
 export const useAvailableOrders = () => {
   return useQuery({
     queryKey: ['available-orders'],
@@ -78,7 +77,6 @@ export const useAvailableOrders = () => {
 
       if (error) throw error;
 
-      // Fetch profiles separately
       const userIds = [...new Set(orders?.map(o => o.user_id).filter(Boolean) as string[])];
       
       if (userIds.length === 0) return orders?.map(o => ({ ...o, profile: null })) || [];
@@ -95,11 +93,10 @@ export const useAvailableOrders = () => {
         profile: order.user_id ? profileMap.get(order.user_id) : null,
       })) || [];
     },
-    refetchInterval: 10000, // Refresh every 10 seconds to see new orders quickly
+    refetchInterval: 10000, 
   });
 };
 
-// Orders assigned to current driver
 export const useDriverOrders = () => {
   const { user } = useAuth();
 
@@ -108,7 +105,6 @@ export const useDriverOrders = () => {
     queryFn: async () => {
       if (!user) return [];
 
-      // First get the driver id
       const { data: driver } = await supabase
         .from('drivers')
         .select('id')
@@ -126,7 +122,6 @@ export const useDriverOrders = () => {
 
       if (error) throw error;
 
-      // Fetch profiles separately
       const userIds = [...new Set(orders?.map(o => o.user_id).filter(Boolean) as string[])];
       
       if (userIds.length === 0) return orders?.map(o => ({ ...o, profile: null })) || [];
@@ -148,7 +143,6 @@ export const useDriverOrders = () => {
   });
 };
 
-// Claim an order for delivery
 export const useClaimOrder = () => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
@@ -157,7 +151,6 @@ export const useClaimOrder = () => {
     mutationFn: async (orderId: string) => {
       if (!user) throw new Error('User not authenticated');
 
-      // Get driver id
       const { data: driver, error: driverError } = await supabase
         .from('drivers')
         .select('id, is_available')
@@ -168,7 +161,6 @@ export const useClaimOrder = () => {
       if (!driver) throw new Error('Perfil de entregador não encontrado');
       if (!driver.is_available) throw new Error('Você precisa estar online para pegar pedidos');
 
-      // Check if order is still available
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .select('driver_id, status')
@@ -181,12 +173,11 @@ export const useClaimOrder = () => {
         throw new Error('Este pedido não está mais disponível');
       }
 
-      // Assign order to driver
       const { error } = await supabase
         .from('orders')
         .update({ driver_id: driver.id })
         .eq('id', orderId)
-        .is('driver_id', null); // Extra safety check
+        .is('driver_id', null);
 
       if (error) throw error;
     },

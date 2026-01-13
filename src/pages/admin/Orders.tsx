@@ -39,7 +39,6 @@ const formatCurrency = (value: number) => {
   }).format(value);
 };
 
-// Admin view: Na Fila → Em Preparo → Pronto para Envio → Entregador na Rota → Pedido Entregue → Finalizado
 const statusOptions = [
   { value: 'pending', label: 'Na Fila' },
   { value: 'confirmed', label: 'Confirmado' },

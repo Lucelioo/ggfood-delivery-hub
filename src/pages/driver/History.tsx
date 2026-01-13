@@ -17,7 +17,6 @@ const formatCurrency = (value: number) => {
 export default function DriverHistory() {
   const { data: history, isLoading } = useDriverDeliveryHistory();
 
-  // Group by date
   const groupedByDate = history?.reduce((acc, order) => {
     const date = order.delivered_at 
       ? format(new Date(order.delivered_at), 'yyyy-MM-dd')

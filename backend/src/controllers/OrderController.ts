@@ -8,7 +8,6 @@ export class OrderController {
   private orderService = new OrderService()
 
   async handleRequest(req: Request): Promise<Response> {
-    // Handle CORS preflight
     if (req.method === 'OPTIONS') {
       return new Response(null, { headers: corsHeaders })
     }
@@ -17,27 +16,22 @@ export class OrderController {
     const path = url.pathname.split('/').filter(Boolean)
 
     try {
-      // POST /orders - Create order
       if (req.method === 'POST' && path.length === 1) {
         return this.create(req)
       }
 
-      // GET /orders - List user orders
       if (req.method === 'GET' && path.length === 1) {
         return this.list(req)
       }
 
-      // GET /orders/available - List available orders for drivers
       if (req.method === 'GET' && path[1] === 'available') {
         return this.listAvailable(req)
       }
 
-      // POST /orders/:id/claim - Claim order (driver)
       if (req.method === 'POST' && path[2] === 'claim') {
         return this.claim(req, path[1])
       }
 
-      // PATCH /orders/:id/status - Update order status
       if (req.method === 'PATCH' && path[2] === 'status') {
         return this.updateStatus(req, path[1])
       }
@@ -50,7 +44,6 @@ export class OrderController {
   }
 
   async create(req: Request): Promise<Response> {
-    // Authenticate
     const authResult = await authenticateRequest(req)
     if (!authResult.success || !authResult.user) {
       return authResult.error!
@@ -59,7 +52,6 @@ export class OrderController {
     try {
       const body: CreateOrderRequest = await req.json()
 
-      // Validate required fields
       if (!body.items || !body.deliveryAddress || !body.paymentMethod) {
         return errorResponse('Dados incompletos do pedido')
       }
@@ -94,7 +86,6 @@ export class OrderController {
       return authResult.error!
     }
 
-    // Check driver role
     const roleResult = await requireDriver(authResult.user.id)
     if (!roleResult.success) {
       return roleResult.error!
@@ -119,7 +110,6 @@ export class OrderController {
       return authResult.error!
     }
 
-    // Check driver role
     const roleResult = await requireDriver(authResult.user.id)
     if (!roleResult.success) {
       return roleResult.error!
@@ -140,7 +130,6 @@ export class OrderController {
       return authResult.error!
     }
 
-    // Check admin or driver role
     const roleResult = await requireAdminOrDriver(authResult.user.id)
     if (!roleResult.success) {
       return roleResult.error!

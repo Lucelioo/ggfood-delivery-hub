@@ -38,7 +38,7 @@ Request → Controller → Service → Repository → Database
 Todas as rotas requerem autenticação via JWT (Bearer Token).
 
 ```typescript
-// Header obrigatório
+ Header obrigatório
 Authorization: Bearer <token>
 ```
 

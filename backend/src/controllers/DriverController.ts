@@ -10,7 +10,6 @@ export class DriverController {
   private orderService = new OrderService()
 
   async handleRequest(req: Request): Promise<Response> {
-    // Handle CORS preflight
     if (req.method === 'OPTIONS') {
       return new Response(null, { headers: corsHeaders })
     }
@@ -19,27 +18,22 @@ export class DriverController {
     const path = url.pathname.split('/').filter(Boolean)
 
     try {
-      // GET /driver/profile - Get driver profile
       if (req.method === 'GET' && path[1] === 'profile') {
         return this.getProfile(req)
       }
 
-      // PATCH /driver/availability - Update availability
       if (req.method === 'PATCH' && path[1] === 'availability') {
         return this.updateAvailability(req)
       }
 
-      // PATCH /driver/location - Update location
       if (req.method === 'PATCH' && path[1] === 'location') {
         return this.updateLocation(req)
       }
 
-      // GET /driver/orders - Get driver's assigned orders
       if (req.method === 'GET' && path[1] === 'orders') {
         return this.getOrders(req)
       }
 
-      // GET /driver/history - Get delivery history
       if (req.method === 'GET' && path[1] === 'history') {
         return this.getHistory(req)
       }
