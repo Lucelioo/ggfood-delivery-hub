@@ -56,7 +56,7 @@ const Orders = () => {
               <p className="text-muted-foreground mb-6">
                 Faça seu primeiro pedido e ele aparecerá aqui!
               </p>
-              <Link to="/">
+              <Link to="/cardapio">
                 <Button variant="hero" size="lg">
                   Ver cardápio
                 </Button>
