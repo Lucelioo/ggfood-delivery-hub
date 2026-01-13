@@ -1,12 +1,22 @@
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Package, Clock, CheckCircle, Truck, MapPin, Loader2, XCircle } from 'lucide-react';
+import { ArrowLeft, Package, Clock, CheckCircle, Truck, MapPin, Loader2, XCircle, ThumbsUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { useOrders } from '@/hooks/useOrders';
+import { useOrders, useConfirmOrderReceipt } from '@/hooks/useOrders';
 import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { useToast } from '@/components/ui/use-toast';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { useState } from 'react';
 
 // Customer view: Aguardando Confirmação → Em Preparo → Em Rota → Pedido Entregue
 const statusConfig = {
@@ -22,6 +32,35 @@ const statusConfig = {
 const Orders = () => {
   const { user } = useAuth();
   const { data: orders, isLoading } = useOrders();
+  const confirmReceipt = useConfirmOrderReceipt();
+  const { toast } = useToast();
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+
+  const handleConfirmClick = (orderId: string) => {
+    setSelectedOrderId(orderId);
+    setConfirmDialogOpen(true);
+  };
+
+  const handleConfirmReceipt = async () => {
+    if (!selectedOrderId) return;
+
+    try {
+      await confirmReceipt.mutateAsync(selectedOrderId);
+      toast({
+        title: 'Recebimento confirmado!',
+        description: 'Obrigado por confirmar o recebimento do seu pedido.',
+      });
+      setConfirmDialogOpen(false);
+      setSelectedOrderId(null);
+    } catch (error) {
+      toast({
+        title: 'Erro ao confirmar',
+        description: 'Não foi possível confirmar o recebimento. Tente novamente.',
+        variant: 'destructive',
+      });
+    }
+  };
 
   if (!user) {
     return (
@@ -87,6 +126,8 @@ const Orders = () => {
                 const status = statusConfig[order.status as keyof typeof statusConfig] || statusConfig.pending;
                 const StatusIcon = status.icon;
                 const orderItems = order.order_items || [];
+                const isDelivered = order.status === 'delivered';
+                const isConfirmed = !!(order as any).customer_confirmed_at;
 
                 return (
                   <div
@@ -120,22 +161,33 @@ const Orders = () => {
                       <p className="font-bold text-lg">
                         R$ {Number(order.total).toFixed(2).replace('.', ',')}
                       </p>
-                      {order.status === 'delivering' && order.estimated_delivery && (
-                        <div className="flex items-center gap-2 text-sm text-primary">
-                          <MapPin className="w-4 h-4" />
-                          <span>
-                            Previsão: {format(new Date(order.estimated_delivery), "HH:mm", { locale: ptBR })}
-                          </span>
-                        </div>
-                      )}
-                      {order.status === 'delivered' && order.delivered_at && (
-                        <div className="flex items-center gap-2 text-sm text-accent">
-                          <CheckCircle className="w-4 h-4" />
-                          <span>
-                            Entregue às {format(new Date(order.delivered_at), "HH:mm", { locale: ptBR })}
-                          </span>
-                        </div>
-                      )}
+                      <div className="flex items-center gap-3">
+                        {order.status === 'delivering' && order.estimated_delivery && (
+                          <div className="flex items-center gap-2 text-sm text-primary">
+                            <MapPin className="w-4 h-4" />
+                            <span>
+                              Previsão: {format(new Date(order.estimated_delivery), "HH:mm", { locale: ptBR })}
+                            </span>
+                          </div>
+                        )}
+                        {isDelivered && !isConfirmed && (
+                          <Button 
+                            variant="default" 
+                            size="sm" 
+                            onClick={() => handleConfirmClick(order.id)}
+                            className="gap-2"
+                          >
+                            <ThumbsUp className="w-4 h-4" />
+                            Confirmar Recebimento
+                          </Button>
+                        )}
+                        {isDelivered && isConfirmed && (
+                          <div className="flex items-center gap-2 text-sm text-accent">
+                            <CheckCircle className="w-4 h-4" />
+                            <span>Recebimento confirmado</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 );
@@ -145,6 +197,34 @@ const Orders = () => {
         </div>
       </main>
       <Footer />
+
+      <Dialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirmar Recebimento</DialogTitle>
+            <DialogDescription>
+              Você confirma que recebeu seu pedido em perfeitas condições?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setConfirmDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleConfirmReceipt} 
+              disabled={confirmReceipt.isPending}
+              className="gap-2"
+            >
+              {confirmReceipt.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <ThumbsUp className="h-4 w-4" />
+              )}
+              Confirmar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
